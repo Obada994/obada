@@ -51,5 +51,10 @@ def signup(request):
         form = UserCreationForm()
     return render(request, 'auth/signup.html', {'form': form})
 
+
 def error(request):
     return HttpResponse("You already answered that question :)")
+
+
+def login_view(request):
+    pass
