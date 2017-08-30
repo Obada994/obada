@@ -8,6 +8,9 @@ class Question(models.Model):
     def __str__(self):
         return self.question_text
 
+    def __unicode__(self):
+        return self.question_text
+
 class Choice(models.Model):
     choice_text = models.CharField(max_length=20, default='UNKNOWN')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -20,4 +23,7 @@ class Answer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
+        return "User: " + self.user.username + ", Question: " + self.choice.question.question_text + ", Answer: " + self.choice.choice_text
+
+    def __unicode__(self):
         return "User: " + self.user.username + ", Question: " + self.choice.question.question_text + ", Answer: " + self.choice.choice_text

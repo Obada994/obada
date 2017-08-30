@@ -1,8 +1,27 @@
 from django.shortcuts import render, get_object_or_404, redirect, HttpResponse
+from django.http import JsonResponse
 from .models import Question, Answer, Choice
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
+from .serializer import AnswerSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import routers, serializers, viewsets
+from django.contrib.auth.models import User
+from .serializer import UserSerializer
 
+class QuestionViewSet(viewsets.ModelViewSet):
+    pass
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class AnsweresList(APIView):
+    def get(self, request):
+        answers = Answer.objects.filter(user=request.user)
+        serial = AnswerSerializer(answers, many=True)
+        return Response(serial.data)
 
 # Create your views here.
 def index(request):
