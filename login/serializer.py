@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from rest_framework import routers, serializers, viewsets
 
 class QuestionSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Question
         fields = ('question_text',)
@@ -17,10 +18,11 @@ class ChoiceSerializer(serializers.ModelSerializer):
         model = Choice
         fields = ('choice_text', 'question')
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+
     class Meta:
         model = User
-        fields = ('username', 'email', 'is_staff')
+        fields = ('url', 'username', 'email', 'is_staff')
 
 class AnswerSerializer(serializers.ModelSerializer):
 

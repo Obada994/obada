@@ -1,27 +1,25 @@
 from django.conf.urls import url, include
 from django.contrib import admin
 from login import views
+from django.contrib.auth import views as auth_views
 from rest_framework import routers
 from rest_framework.urlpatterns import format_suffix_patterns
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
-# router.register(r'users-api', views.UserViewSet.as_view())
-# router.register(r'questions-api', views.QuestionViewSet.as_view())
+router.register(r'all_users_readOnly', views.UserViewSet, base_name='user')
+router.register(r'all_answers_readOnly', views.AnswerViewSet)
+router.register(r'all_questions_readOnly', views.QuestionViewSet)
 
-# Wire up our API using automatic URL routing.
-# Additionally, we include login URLs for the browsable API.
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^', include('login.urls'), name='question'),
+    url(r'^signup/$', views.signup, name='signup'),
+    url(r'^login/$', auth_views.login, name='login'),
+    url(r'^logout/$', auth_views.logout, {'next_page': 'signup'}, name='logout'),
     url(r'^admin/', admin.site.urls),
     url(r'^question/', include('login.urls')),
-    url(r'^signup/$', views.signup, name='signup'),
-    url(r'^error/$', views.error, name='error'),
-    url(r'^login/$', views.login_view, name='login'),
-    url(r'^rest/', views.AnsweresList.as_view()),
+    url(r'api/', include(router.urls)),
+    url(r'myAnswers/', views.UserAnswers),
 
 ]
-
-# urlpatterns = format_suffix_patterns(urlpatterns)

@@ -25,8 +25,10 @@ SECRET_KEY = '$qb_g(&f3yhta#f=(1!b&fxeedmeur3--vp$o)-z=3!6gmy1%9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['testserver',
+                 'localhost']
 
+LOGIN_REDIRECT_URL = '/question'
 
 # Application definition
 

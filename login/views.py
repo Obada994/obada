@@ -1,59 +1,90 @@
 from django.shortcuts import render, get_object_or_404, redirect, HttpResponse
-from django.http import JsonResponse
-from .models import Question, Answer, Choice
+from .models import Question, Answer
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
-from .serializer import AnswerSerializer
+from rest_framework import viewsets
+from django.contrib.auth.models import User
+from .serializer import UserSerializer, AnswerSerializer, QuestionSerializer
+from django.core.urlresolvers import reverse
+from django.http import JsonResponse
+from rest_framework.parsers import JSONParser
+from rest_framework import authentication, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import routers, serializers, viewsets
-from django.contrib.auth.models import User
-from .serializer import UserSerializer
+#REST API views here
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
-class QuestionViewSet(viewsets.ModelViewSet):
-    pass
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-class AnsweresList(APIView):
-    def get(self, request):
+class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
+
+    queryset = Answer.objects.all()
+    serializer_class = AnswerSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
+
+    queryset = Question.objects.all()
+    serializer_class = QuestionSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+def UserAnswers(request):
+    if request.method == 'GET':
         answers = Answer.objects.filter(user=request.user)
-        serial = AnswerSerializer(answers, many=True)
-        return Response(serial.data)
+        serializer = AnswerSerializer(answers, many=True, context={'request': request})
+        return JsonResponse(serializer.data, safe=False)
 
-# Create your views here.
-def index(request):
+    elif request.method == 'POST':
+        data = JSONParser().parse(request)
+        serializer = AnswerSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, status=201)
+        return JsonResponse(serializer.errors, status=400)
+
+# Question views here.
+def Index(request):
+    # If the user is not authenticated
+    if not request.user.is_authenticated():
+        return redirect('signup')
     all_questions = Question.objects.all()
-    context = {
-        'all_questions': all_questions
-    }
-    return render(request, 'questions/index.html', context)
+    user_answeres = Answer.objects.filter(user=request.user)
+    if len(user_answeres) > 0:
+        for answer in user_answeres:
+            # Probably there's a smarter way to do it!
+            all_questions = all_questions.exclude(pk=answer.choice.question.pk)
+        if len(all_questions) == 0:
+            return render(request, 'questions/done.html', {})
+        else:
+            path = reverse('question:question', args=(all_questions[0].id,))
+            return redirect(path)
+    else:
+        path = reverse('question:question', args=(all_questions[0].id,))
+        return redirect(path)
 
-
-def question(request, question_id):
+def QuestionView(request, question_id):
+    # If the user is not authenticated
+    if not request.user.is_authenticated():
+        return redirect('signup')
     # Just in case the question does not exist
     question = get_object_or_404(Question, pk=question_id)
+    if request.method == 'POST':
+        try:
+            selected_choice = question.choice_set.get(pk=request.POST['option'])
+        except:
+            # If the user submits nothing redirect them to the same page
+            return redirect(request.path)
+        user_answer = Answer(choice=selected_choice, user=request.user)
+        user_answer.save()
+        return redirect('question:index')
+
     all_choices = question.choice_set.all()
     context = {'all_choices': all_choices,
                'question': question}
 
-    return render(request, 'questions/questions.html', context)
-
-
-def choice(request, question_id, choice_id):
-    usr_choice = Choice.objects.get(pk=choice_id)
-    # Create an answer object from the user_choice
-    usr_answer = Answer(choice=usr_choice, user=request.user)
-    # Get all the answers to check if this user has already an answer for the same question
-    all_answers = Answer.objects.all()
-    for each_answer in all_answers:
-        if (each_answer.choice.question == usr_answer.choice.question) and (each_answer.user == usr_answer.user):
-            return redirect('error')
-    # Up to this point the usr_answer is a new answer.
-    usr_answer.save()
-    return redirect('index')
+    return render(request, 'questions/question.html', context)
 
 
 def signup(request):
@@ -65,15 +96,7 @@ def signup(request):
             raw_password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=raw_password)
             login(request, user)
-            return redirect('index')
+            return redirect('question:index')
     else:
         form = UserCreationForm()
-    return render(request, 'auth/signup.html', {'form': form})
-
-
-def error(request):
-    return HttpResponse("You already answered that question :)")
-
-
-def login_view(request):
-    pass
+    return render(request, 'registration/signup.html', {'form': form})

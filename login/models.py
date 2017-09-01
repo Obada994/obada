@@ -24,6 +24,3 @@ class Answer(models.Model):
 
     def __str__(self):
         return "User: " + self.user.username + ", Question: " + self.choice.question.question_text + ", Answer: " + self.choice.choice_text
-
-    def __unicode__(self):
-        return "User: " + self.user.username + ", Question: " + self.choice.question.question_text + ", Answer: " + self.choice.choice_text

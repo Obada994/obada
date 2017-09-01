@@ -1,8 +1,0 @@
-<ul>
-{% if question %}
-    <h3>{{ question }}</h3>
-    {% for choice in all_choices %}
-        <li><a href="{% url 'choice' question.id choice.id%}">{{ choice.choice_text }}</a>></li>
-     {% endfor %}
-{% endif %}
-</ul>
