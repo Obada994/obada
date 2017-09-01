@@ -91,4 +91,23 @@ class IndexTest(TestCase):
         self.assertEqual(200, response.status_code)
 
 class SignUpTest(TestCase):
-    pass
+    def setUp(self):
+        super().setUp()
+
+    def test_SignUp(self):
+
+        request = RequestFactory().get('/signup/')
+        response=self.client.post(request.path, {})
+        # POST an invalid UserCreationForm the result should be an HttpResponse
+        self.assertEqual(200, response.status_code)
+        self.assertIsInstance(response, HttpResponse)
+
+        response=self.client.post(request.path, {'username':'someuser', 'password1' : 'user1234', 'password2': 'user123t'})
+        # POST mismatch password, the response should be an HttpResponse
+        self.assertEqual(200, response.status_code)
+        self.assertIsInstance(response, HttpResponse)
+
+        response=self.client.post(request.path, {'username':'someuser', 'password1' : 'user1234', 'password2': 'user1234'})
+        # POST valid information and the response should be a redirect
+        self.assertEqual(302, response.status_code)
+        self.assertNotEqual('/signup/', response.url)
